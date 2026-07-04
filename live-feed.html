@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Gallery - Photobooth MPLS 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --sky-deep: #1E5FBF;
+        --sky: #3B82F6;
+        --sky-light: #7DB8FF;
+        --sun-yellow: #FFC93C;
+        --sun-orange: #FF8A3D;
+        --berry-purple: #8B5CF6;
+        --ink: #1B2A55;
+        --night: #15193A;
+      }
+      * { box-sizing: border-box; }
+      body {
+        font-family: "Nunito", sans-serif;
+        background: linear-gradient(180deg, var(--sky-deep) 0%, var(--sky) 40%, var(--sky-light) 100%);
+        color: white;
+        margin: 0;
+        min-height: 100vh;
+        overflow-x: hidden;
+        position: relative;
+      }
+      .font-headline { font-family: "Baloo 2", sans-serif; }
+
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background:
+          radial-gradient(circle 700px at 90% 5%, rgba(255,201,60,0.30) 0%, transparent 70%),
+          radial-gradient(circle 400px at 5% 15%, rgba(255,255,255,0.16) 0%, transparent 70%);
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .cloud-deco {
+        position: fixed;
+        background: rgba(255,255,255,0.45);
+        border-radius: 100px;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .cloud-deco::before, .cloud-deco::after {
+        content: '';
+        position: absolute;
+        background: rgba(255,255,255,0.45);
+        border-radius: 50%;
+      }
+      .cloud-deco::before { width: 55%; height: 90%; top: -45%; left: 10%; }
+      .cloud-deco::after { width: 40%; height: 70%; top: -30%; right: 12%; }
+
+      @keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+      @keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 96% { transform: scaleY(0.1); } }
+      @keyframes drift { 0% { transform: translateX(0); } 100% { transform: translateX(50px); } }
+      @keyframes scaleUp {
+        from { transform: scale(0.85); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+      }
+      .animate-float { animation: floaty 3.8s ease-in-out infinite; }
+      .animate-drift { animation: drift 8s ease-in-out infinite alternate; }
+      .mascot-blink { animation: blink 4.5s ease-in-out infinite; transform-origin: center; }
+      .photo-card { animation: scaleUp 0.5s ease-out forwards; }
+
+      .toy-card-light {
+        background: #FFF8E9;
+        border-radius: 24px;
+        box-shadow: 0 8px 0 rgba(27,42,85,0.1), 0 18px 36px rgba(20,40,90,0.22);
+      }
+
+      .badge-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255,255,255,0.18);
+        backdrop-filter: blur(10px);
+        padding: 10px 22px;
+        border-radius: 100px;
+        border: 1px solid rgba(255,255,255,0.3);
+        font-weight: 800;
+        font-family: "Baloo 2", sans-serif;
+      }
+
+      .relative-z { position: relative; z-index: 1; }
+    </style>
+  </head>
+  <body class="p-8 md:p-12">
+    <!-- Decorative clouds -->
+    <div class="cloud-deco animate-drift" style="width:180px;height:60px;top:50px;left:6%;"></div>
+    <div class="cloud-deco animate-drift" style="width:120px;height:44px;top:160px;left:80%;animation-delay:-3s;"></div>
+    <div class="cloud-deco animate-drift" style="width:100px;height:38px;top:400px;left:90%;animation-delay:-1.5s;"></div>
+
+    <header class="relative-z flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+      <div class="flex items-center gap-5">
+        <!-- Mascot Klik -->
+        <svg class="w-20 h-20 animate-float" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+          <rect x="50" y="118" width="16" height="28" rx="8" fill="#FF8A3D"/>
+          <rect x="94" y="118" width="16" height="28" rx="8" fill="#FF8A3D"/>
+          <rect x="25" y="45" width="110" height="85" rx="26" fill="#FFC93C"/>
+          <rect x="60" y="28" width="40" height="22" rx="8" fill="#FFC93C"/>
+          <rect x="14" y="80" width="34" height="14" rx="7" fill="#FFC93C" transform="rotate(-10 14 80)"/>
+          <rect x="112" y="80" width="34" height="14" rx="7" fill="#FFC93C" transform="rotate(10 146 94)"/>
+          <circle cx="80" cy="92" r="34" fill="#1B2A55"/>
+          <circle cx="80" cy="92" r="26" fill="#3B82F6"/>
+          <circle cx="80" cy="92" r="17" fill="#15193A"/>
+          <g class="mascot-blink">
+            <circle cx="71" cy="86" r="6" fill="white"/>
+            <circle cx="89" cy="86" r="6" fill="white"/>
+            <circle cx="72.5" cy="87.5" r="2.6" fill="#1B2A55"/>
+            <circle cx="90.5" cy="87.5" r="2.6" fill="#1B2A55"/>
+          </g>
+          <path d="M73 100 Q80 106 87 100" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <circle cx="118" cy="58" r="6" fill="#FF8A3D"/>
+        </svg>
+        <div>
+          <h1 class="text-4xl md:text-6xl font-extrabold font-headline tracking-tight drop-shadow-lg">
+            Live <span class="text-yellow-300">Exhibition</span>
+            <span class="material-symbols-outlined animate-wiggle text-yellow-300 align-middle" style="font-variation-settings:'FILL' 1;font-size:48px;">auto_awesome</span>
+          </h1>
+          <p class="text-white/85 mt-2 text-lg font-semibold">Karya Photobooth Pengunjung MPLS 2026</p>
+        </div>
+      </div>
+      <div class="badge-pill">
+        <span id="sync-dot" class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></span>
+        <span id="sync-text" class="text-sm">Sinkronisasi Aktif</span>
+      </div>
+    </header>
+
+    <div
+      id="gallery-container"
+      class="relative-z grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6"
+    >
+      <div class="col-span-full text-center py-20 text-white/80 font-semibold text-lg">
+        Memuat galeri...
+      </div>
+    </div>
+
+    <script>
+      // URL SCRIPT GOOGLE KAMU
+      const SCRIPT_URL =
+        "https://script.google.com/macros/s/AKfycbxX9VJAIEms8rufpRS7VfCAVeLjvyFn2iVwQDT9IzUR_5yJwMngo67yNYtD5rykVMQ/exec";
+      let lastPhotoCount = 0;
+
+      const KLIK_MASCOT_SVG = `
+        <svg class="w-28 h-28 mx-auto animate-float" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+          <rect x="50" y="118" width="16" height="28" rx="8" fill="#FF8A3D"/>
+          <rect x="94" y="118" width="16" height="28" rx="8" fill="#FF8A3D"/>
+          <rect x="25" y="45" width="110" height="85" rx="26" fill="#FFC93C"/>
+          <rect x="60" y="28" width="40" height="22" rx="8" fill="#FFC93C"/>
+          <circle cx="80" cy="92" r="34" fill="#1B2A55"/>
+          <circle cx="80" cy="92" r="26" fill="#3B82F6"/>
+          <circle cx="80" cy="92" r="17" fill="#15193A"/>
+          <circle cx="71" cy="86" r="6" fill="white"/>
+          <circle cx="89" cy="86" r="6" fill="white"/>
+          <circle cx="72.5" cy="87.5" r="2.6" fill="#1B2A55"/>
+          <circle cx="90.5" cy="87.5" r="2.6" fill="#1B2A55"/>
+          <path d="M73 100 Q80 106 87 100" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <circle cx="118" cy="58" r="6" fill="#FF8A3D"/>
+        </svg>`;
+
+      async function fetchPhotos() {
+        const syncText = document.getElementById("sync-text");
+        const syncDot = document.getElementById("sync-dot");
+
+        try {
+          syncText.innerText = "Memeriksa data baru...";
+          syncDot.classList.replace("bg-green-400", "bg-yellow-300");
+
+          const response = await fetch(SCRIPT_URL, {
+            redirect: "follow",
+            method: "POST",
+            headers: {
+              "Content-Type": "text/plain;charset=utf-8",
+            },
+            body: JSON.stringify({ action: "get_all_photos" }),
+          });
+          const data = await response.json();
+
+          if (data.status === "success") {
+            if (data.photos.length !== lastPhotoCount) {
+              renderGallery(data.photos);
+              lastPhotoCount = data.photos.length;
+            }
+            syncText.innerText = `Menampilkan ${data.photos.length} Karya`;
+            syncDot.classList.replace("bg-yellow-300", "bg-green-400");
+          }
+        } catch (err) {
+          console.error(err);
+          syncText.innerText = "Menunggu koneksi...";
+          syncDot.classList.replace("bg-yellow-300", "bg-red-400");
+        }
+      }
+
+      function renderGallery(photos) {
+        const container = document.getElementById("gallery-container");
+        if (photos.length === 0) {
+          container.innerHTML = `
+            <div class="col-span-full text-center py-16">
+              ${KLIK_MASCOT_SVG}
+              <p class="text-white font-bold text-xl mt-4">Belum ada foto, nih!</p>
+              <p class="text-white/75 mt-1">Karya pertama akan tampil di sini secara otomatis.</p>
+            </div>`;
+          return;
+        }
+        container.innerHTML = photos
+          .map(
+            (photo) => `
+                <div class="photo-card toy-card-light p-2 cursor-pointer hover:-translate-y-1 transition-transform" onclick="window.open('${photo.url}', '_blank')">
+                    <img src="${photo.url}" class="w-full aspect-[2/3] object-cover rounded-2xl" loading="lazy">
+                </div>
+            `,
+          )
+          .join("");
+      }
+
+      // Panggil pertama kali, lalu ulangi setiap 15 detik
+      fetchPhotos();
+      setInterval(fetchPhotos, 15000);
+    </script>
+  </body>
+</html>
