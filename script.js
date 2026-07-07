@@ -267,11 +267,148 @@ async function startSequenceCapture() {
   btnStartCapture.classList.remove("opacity-50");
   showView("result");
 
-  await drawCompiledCanvas(false);
-  await processCloudUpload();
+  // Siapkan tampilan Review
+  document.getElementById("review-actions-panel").classList.remove("hidden");
+  document.getElementById("review-actions-panel").classList.add("flex");
+  document.getElementById("cloud-status-panel").classList.add("hidden");
+  document.getElementById("cloud-status-panel").classList.remove("flex");
+  document.getElementById("wa-share-panel").classList.add("hidden");
+  document.getElementById("download-actions-panel").classList.add("hidden");
+  document.getElementById("download-actions-panel").classList.remove("flex");
+  
+  const retakeContainer = document.getElementById("retake-container");
+  if (retakeContainer) {
+    retakeContainer.classList.remove("hidden");
+    retakeContainer.classList.add("flex");
+  }
 
-  // Generate GIF di background setelah upload selesai
-  generateGif();
+  await drawCompiledCanvas(false);
+  renderResultThumbnails();
+
+  // Generate GIF preview (tanpa QR dan tanpa upload)
+  generateGif(false);
+}
+
+function renderResultThumbnails() {
+  const container = document.getElementById("retake-thumbnails");
+  if (!container) return;
+  container.innerHTML = "";
+  capturedPhotos.forEach((img, i) => {
+    container.innerHTML += `
+      <div 
+        class="w-[72px] h-[72px] rounded-xl overflow-hidden cursor-pointer border-[3px] border-transparent hover:border-yellow-300 transition-all shadow-md relative group"
+        onclick="retakePhoto(${i})"
+      >
+        <img src="${img.src}" class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-ink/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <span class="material-symbols-outlined text-white text-2xl">replay</span>
+        </div>
+      </div>
+    `;
+  });
+}
+
+async function retakePhoto(index) {
+  showView("camera");
+  const btnStart = document.getElementById("btn-start-capture");
+  btnStart.classList.add("hidden"); 
+
+  const overlay = document.getElementById("countdown-overlay");
+  const txtCount = document.getElementById("countdown-text");
+  const txtPose = document.getElementById("pose-status");
+  const ring = document.getElementById("countdown-ring");
+  const RING_CIRCUMFERENCE = 597;
+
+  overlay.classList.remove("hidden");
+  txtPose.innerText = `Retake Pose ${index + 1}`;
+  skipCurrentPose = false;
+
+  if (ring) {
+    ring.style.transition = "none";
+    ring.style.strokeDashoffset = "0";
+    ring.getBoundingClientRect(); // force reflow
+    ring.style.transition = "stroke-dashoffset 0.95s linear";
+  }
+
+  for (let t = selectedTime; t > 0; t--) {
+    txtCount.innerText = t;
+    if (ring) {
+      ring.style.strokeDashoffset = (RING_CIRCUMFERENCE * (selectedTime - t)) / selectedTime;
+    }
+    if (skipCurrentPose) break;
+    await wait(1000);
+    if (skipCurrentPose) break;
+  }
+  skipCurrentPose = false;
+  overlay.classList.add("hidden");
+
+  try {
+    shutterSound.currentTime = 0;
+    shutterSound.play().catch((e) => console.warn("Suara kamera diblokir browser"));
+  } catch (e) {}
+
+  const tempCanvas = document.createElement("canvas");
+  tempCanvas.width = video.videoWidth;
+  tempCanvas.height = video.videoHeight;
+  const tCtx = tempCanvas.getContext("2d");
+
+  if (isMirrored) {
+    tCtx.translate(tempCanvas.width, 0);
+    tCtx.scale(-1, 1);
+  }
+  tCtx.drawImage(video, 0, 0);
+
+  const img = new Image();
+  img.src = tempCanvas.toDataURL("image/jpeg", 0.9);
+  await new Promise((r) => (img.onload = r));
+  capturedPhotos[index] = img; // Timpa foto lama
+
+  // Update thumbnail di mode camera
+  const thumb = document.getElementById(`thumb-${index + 1}`);
+  if (thumb) {
+    thumb.innerHTML = `<img src="${img.src}" class="w-full h-full object-cover">`;
+  }
+
+  videoWrapper.classList.add("flash-effect");
+  await wait(150);
+  videoWrapper.classList.remove("flash-effect");
+
+  btnStart.classList.remove("hidden");
+
+  // Kembali ke halaman hasil & generate ulang
+  showView("result");
+  renderResultThumbnails();
+  await drawCompiledCanvas(false);
+  generateGif(false); 
+}
+
+async function confirmAndUpload() {
+  document.getElementById("review-actions-panel").classList.add("hidden");
+  document.getElementById("review-actions-panel").classList.remove("flex");
+  
+  document.getElementById("cloud-status-panel").classList.remove("hidden");
+  document.getElementById("cloud-status-panel").classList.add("flex");
+  
+  const retakeContainer = document.getElementById("retake-container");
+  if (retakeContainer) {
+    retakeContainer.classList.add("hidden");
+    retakeContainer.classList.remove("flex");
+  }
+  
+  const statusText = document.getElementById("upload-status-text");
+  statusText.innerText = "Membuka Sesi di Cloud... (Mohon tunggu)";
+  statusText.className = "text-sm font-bold text-yellow-300 animate-pulse";
+  
+  // Lakukan upload (folder, qr, 4 foto original, dan grid)
+  await processCloudUpload();
+  
+  // Generate GIF final (dengan QR) & langsung upload GIF
+  generateGif(true);
+  
+  // Tampilkan panel WhatsApp & Download
+  document.getElementById("wa-share-panel").classList.remove("hidden");
+  document.getElementById("download-actions-panel").classList.remove("hidden");
+  document.getElementById("download-actions-panel").classList.add("flex");
 }
 
 // Draw Canvas Framework
@@ -336,7 +473,7 @@ async function drawCompiledCanvas(withQR = false, qrCanvasElement = null) {
 // ==========================================
 // GIF GENERATION (gif.js)
 // ==========================================
-async function generateGif() {
+async function generateGif(withQR = false) {
   const statusText = document.getElementById("upload-status-text");
   const btnSaveGif = document.getElementById("btn-save-gif");
 
@@ -401,6 +538,15 @@ async function generateGif() {
       // Draw the gif frame overlay on top
       fCtx.drawImage(gifFrameImg, 0, 0, GIF_W, GIF_H);
 
+      // Draw QR Code on GIF (scaled down by half compared to 1200x1800 canvas)
+      if (withQR) {
+        const qrElement = document.getElementById("qr-element");
+        const qrCanvas = qrElement ? qrElement.querySelector("canvas") : null;
+        if (qrCanvas) {
+          fCtx.drawImage(qrCanvas, 422.5, 728, 117.5, 117.5);
+        }
+      }
+
       // Draw pose indicator
       fCtx.fillStyle = "rgba(255,255,255,0.85)";
       fCtx.beginPath();
@@ -437,8 +583,8 @@ async function generateGif() {
       btnSaveGif.classList.remove("opacity-50", "cursor-not-allowed");
     }
 
-    // Upload GIF to Drive
-    if (currentFolderId) {
+    // Upload GIF to Drive (jika final/withQR)
+    if (withQR && currentFolderId) {
       statusText.innerText = "⏳ Mengunggah GIF ke Drive...";
       statusText.className = "text-sm font-bold text-primary animate-pulse";
 
@@ -448,14 +594,22 @@ async function generateGif() {
         "Animasi_Photobooth.gif",
         currentFolderId,
       );
-    }
 
-    statusText.innerHTML = "✅ Semua file tersimpan di Google Drive! (6 file)";
-    statusText.className = "text-sm font-bold text-green-600";
+      statusText.innerHTML = "✅ Semua file tersimpan di Google Drive! (6 file)";
+      statusText.className = "text-sm font-bold text-green-600";
+    } else if (!withQR) {
+      statusText.innerHTML = "✅ Preview siap. Silakan klik Unggah jika sudah puas.";
+      statusText.className = "text-sm font-bold text-green-600";
+    }
   } catch (err) {
     console.error("GIF generation error:", err);
-    statusText.innerHTML = "✅ Foto tersimpan. ⚠️ GIF gagal dibuat.";
-    statusText.className = "text-sm font-bold text-amber-600";
+    if (withQR) {
+      statusText.innerHTML = "✅ Foto tersimpan. ⚠️ GIF gagal dibuat.";
+      statusText.className = "text-sm font-bold text-amber-600";
+    } else {
+      statusText.innerHTML = "⚠️ Gagal membuat preview animasi GIF.";
+      statusText.className = "text-sm font-bold text-red-500";
+    }
   }
 }
 
@@ -518,6 +672,48 @@ function downloadResult() {
   link.href = generatedGifUrl;
   link.click();
 }
+
+function printImage() {
+  const dataUrl = mainCanvas.toDataURL("image/jpeg", 1.0);
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert("Pop-up diblokir. Harap izinkan pop-up untuk mencetak.");
+    return;
+  }
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Print Photo - 4R</title>
+        <style>
+          @page {
+            size: 4in 6in; /* 4R Size */
+            margin: 0;
+          }
+          body {
+            margin: 0;
+            padding: 0;
+            width: 4in;
+            height: 6in;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: white;
+          }
+          img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Fit perfectly into 4R */
+          }
+        </style>
+      </head>
+      <body>
+        <img src="${dataUrl}" onload="window.print(); window.close();">
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+}
+
 
 // Upload & Logic integration
 async function processCloudUpload() {
