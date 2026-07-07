@@ -839,6 +839,14 @@
                   class="hidden w-full max-w-md h-auto object-contain rounded-xl"
                 />
               </div>
+
+              <!-- Retake Thumbnails (New) -->
+              <div id="retake-container" class="mt-4 flex flex-col items-center gap-2">
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Klik foto untuk jepret ulang</p>
+                <div class="flex gap-3 justify-center" id="retake-thumbnails">
+                   <!-- Will be populated by JS -->
+                </div>
+              </div>
             </div>
           </section>
           <!-- Mascot/Person: Result page decoration —
@@ -851,9 +859,30 @@
           />
 
           <section class="lg:col-span-5 flex flex-col gap-6">
+            <!-- Review Actions -->
+            <div id="review-actions-panel" class="glass-panel p-8 rounded-[28px] flex flex-col gap-4 text-center">
+              <h3 class="text-xl font-bold font-headline mb-1">Sudah Puas dengan Hasilnya?</h3>
+              <p class="text-sm text-slate-500 mb-2">Pilih foto di sebelah kiri untuk mengulang, atau unggah jika sudah pas.</p>
+              <button
+                id="btn-confirm-upload"
+                onclick="confirmAndUpload()"
+                class="hero-gradient px-8 py-4 rounded-full font-bold flex items-center justify-center gap-2 shadow-lg hover:scale-105 transition-all text-lg w-full"
+              >
+                <span class="material-symbols-outlined text-2xl">cloud_upload</span>
+                Unggah & Dapatkan QR
+              </button>
+              <button
+                onclick="resetApp()"
+                class="mt-2 text-sm font-bold text-red-500 hover:text-red-600 transition-colors"
+              >
+                Batalkan Sesi
+              </button>
+            </div>
+
             <!-- Cloud Status -->
             <div
-              class="glass-panel p-8 rounded-[28px] flex flex-col gap-4 text-center"
+              id="cloud-status-panel"
+              class="glass-panel p-8 rounded-[28px] hidden flex-col gap-4 text-center"
             >
               <div class="flex items-center justify-center gap-2">
                 <span
@@ -886,7 +915,7 @@
             </div>
 
             <!-- WhatsApp Share -->
-            <div class="glass-panel p-8 rounded-[28px]">
+            <div id="wa-share-panel" class="glass-panel p-8 rounded-[28px] hidden">
               <div class="flex items-center gap-3 mb-6">
                 <span
                   class="material-symbols-outlined text-green-500"
@@ -928,7 +957,7 @@
             </div>
 
             <!-- Download Buttons -->
-            <div class="flex flex-col gap-4">
+            <div id="download-actions-panel" class="hidden flex-col gap-4">
               <div class="flex gap-3">
                 <button
                   onclick="downloadImage()"
@@ -945,6 +974,13 @@
                 >
                   <span class="material-symbols-outlined text-lg">gif</span
                   >Simpan GIF
+                </button>
+                <button
+                  onclick="printImage()"
+                  class="flex-1 bg-gradient-to-r from-orange-400 to-red-500 text-white py-3.5 rounded-xl font-bold flex flex-col items-center justify-center gap-1 text-sm transition-all hover:scale-105 shadow-lg"
+                >
+                  <span class="material-symbols-outlined text-lg">print</span
+                  >Print 4R
                 </button>
               </div>
               <div class="flex gap-3">
